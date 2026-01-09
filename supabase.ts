@@ -1,8 +1,17 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Access environment variables securely
-// Use optional chaining to safely access .env, preventing crashes if it's undefined
-const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL || 'https://placeholder-url.supabase.co';
-const supabaseAnonKey = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || 'placeholder-key';
+// Get environment variables
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Check if keys are missing (Helps debugging deployment issues)
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('CRITICAL: Supabase Environment Variables are missing!');
+}
+
+// Create the client
+// We use 'as string' to satisfy TypeScript, assuming variables are present
+export const supabase = createClient(
+  supabaseUrl as string, 
+  supabaseAnonKey as string
+);
