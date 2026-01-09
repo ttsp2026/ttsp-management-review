@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { supabase } from './supabase';
 import Layout from './components/Layout';
 import LandingPage from './components/LandingPage';
@@ -12,39 +12,50 @@ function App() {
   const [session, setSession] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Initialize theme from localStorage, default to 'aurora'
+  // Initialize theme
   const [theme, setTheme] = useState<ThemeType>(() => {
     const saved = localStorage.getItem('ttsp_theme');
     return (saved as ThemeType) || 'aurora';
   });
 
-  // Save theme changes to localStorage
   useEffect(() => {
     localStorage.setItem('ttsp_theme', theme);
   }, [theme]);
 
   // Auth Listener
   useEffect(() => {
+    // 1. Check active session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setSession(session);
-      }
+      setSession(session);
       setIsLoading(false);
+    }).catch(err => {
+      console.error("Supabase Error:", err);
+      setIsLoading(false); // Stop loading even if error
     });
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    // 2. Listen for changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
+  // --- DEBUGGING LOADING STATE ---
   if (isLoading) {
       return (
-          <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          // We use INLINE STYLES here to ensure visibility even if Tailwind fails
+          <div style={{ 
+              backgroundColor: '#1e293b', 
+              height: '100vh', 
+              width: '100vw', 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center',
+              color: 'white',
+              fontSize: '20px'
+          }}>
+              <div>Loading Application...</div>
           </div>
       );
   }
@@ -66,7 +77,6 @@ function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/pdr" element={<PDRPage />} />
           
-          {/* Placeholder Routes */}
           <Route path="/projects" element={<Placeholder />} />
           <Route path="/teams" element={<Placeholder />} />
           <Route path="/schedule" element={<Placeholder />} />
